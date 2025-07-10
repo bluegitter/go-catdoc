@@ -1,4 +1,4 @@
-package gocatdoc
+package main
 
 import (
 	"fmt"

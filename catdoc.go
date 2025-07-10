@@ -1,4 +1,9 @@
-package gocatdoc
+package main
+
+/*
+#include <stdlib.h>
+*/
+import "C"
 
 import (
 	"bytes"
@@ -6,10 +11,13 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"strings"
+	"os"
+	"path/filepath"
 	"sync"
 
 	"embed"
+
+	"strings"
 
 	"github.com/tetratelabs/wazero"
 	"github.com/tetratelabs/wazero/api"
@@ -82,6 +90,22 @@ func GetLastAuthorFromFile(file io.ReadSeeker) (string, error) {
 	return callWASMFuncWithFile("get_last_author", file)
 }
 
+//export GetTextFromPath
+func GetTextFromPath(path *C.char) *C.char {
+	goPath := C.GoString(path)
+	f, err := os.Open(goPath)
+	if err != nil {
+		return C.CString("ERROR: " + err.Error())
+	}
+	defer f.Close()
+
+	text, err := callWASMFuncWithFile("get_text", f)
+	if err != nil {
+		return C.CString("ERROR: " + err.Error())
+	}
+	return C.CString(text)
+}
+
 func GetTextFromFile(file io.ReadSeeker) (string, error) {
 	return callWASMFuncWithFile("get_text", file)
 }
@@ -146,4 +170,28 @@ func callWASMFunc(funcName string, fs fs.FS) (string, error) {
 		err = fmt.Errorf(errStr)
 	}
 	return outStr, err
+}
+
+func main() {
+	if len(os.Args) < 2 {
+		progName := filepath.Base(os.Args[0])
+		fmt.Printf("用法: %s <文件路径>\n", progName)
+		os.Exit(1)
+	}
+
+	filePath := os.Args[1]
+	f, err := os.Open(filePath)
+	if err != nil {
+		fmt.Printf("无法打开文件: %s\n错误: %v\n", filePath, err)
+		os.Exit(1)
+	}
+	defer f.Close()
+
+	text, err := GetTextFromFile(f)
+	if err != nil {
+		fmt.Printf("读取文件内容出错: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Println(text)
 }

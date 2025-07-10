@@ -1,10 +1,11 @@
-package gocatdoc_test
+package main_test
 
 import (
-	gocatdoc "github.com/semvis123/go-catdoc"
 	"io"
 	"os"
 	"testing"
+
+	gocatdoc "github.com/semvis123/go-catdoc"
 )
 
 func TestVersion(t *testing.T) {

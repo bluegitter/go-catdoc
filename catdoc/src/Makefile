@@ -15,7 +15,7 @@ datadir = ${datarootdir}
 datarootdir = ${prefix}/share
 mandir = ${datarootdir}/man
 INSTALL = /usr/local/bin/ginstall -c
-WISH = /usr/local/bin/wish
+WISH = /opt/anaconda3/envs/venv/bin/wish
 CC = gcc
 COMPAT_OBJ=
 build_targets = catdoc xls2csv catppt
@@ -23,7 +23,7 @@ install_targets = install-catdoc
 CHARSETPATH=${datadir}/catdoc
 # Flags to pass to your C compilier
 # remove -O2 on HP/UX 9. It is known to cause problems
-FLAGS=-I. -g -O3 -DHAVE_CONFIG_H -DCATDOC_VERSION=\"0.95\" -DCHARSETPATH=\"${CHARSETPATH}\"
+FLAGS=-I. -g -O2  -DHAVE_CONFIG_H -DCATDOC_VERSION=\"0.95\" -DCHARSETPATH=\"${CHARSETPATH}\"
 
 #Compile-time configuration of catdoc itself. Edit according to taste
 
@@ -75,40 +75,7 @@ OBJPPT=catppt.o pptparse.o $(COMMONOBJ)
 #	$(CC) -c $(CFLAGS) $*
 all: catdoc xls2csv catppt
 catdoc: $(OBJ)
-	$(CC) -o catdoc  $(OBJ) $(LDFLAGS)
-
-third_party/emsdk:
-	mkdir -p third_party/emsdk
-	test -d $@/.git || git clone --depth 1 https://github.com/emscripten-core/emsdk.git $@
-	cd $@ && git fetch origin $(EMSDK_COMMIT) && git checkout $(EMSDK_COMMIT)
-	touch $@
-
-emsdk.uptodate: third_party/emsdk
-	third_party/emsdk/emsdk install 3.1.37
-	third_party/emsdk/emsdk activate 3.1.37
-	rm -Rf third_party/emsdk/upstream/emscripten
-	git clone $(EMSCRIPTEN_FORK) third_party/emsdk/upstream/emscripten
-	cd third_party/emsdk/upstream/emscripten/ && git checkout $(EMSCRIPTEN_BRANCH)
-	touch emsdk.uptodate
-
-EMSDK_DIR=$(PWD)/third_party/emsdk/upstream/emscripten
-EMSDK_COMMIT=ef2a8e929d5337755e9b1d1e1d4ad859dc694eee
-EMSCRIPTEN_BRANCH=implement-more-syscalls-for-standalone
-EMSCRIPTEN_FORK=https://github.com/jerbob92/emscripten
-
-catdoc-wasm: emsdk.uptodate
-	$(EMSDK_DIR)/emcc -o ../../catdoc.wasm \
-		catdoc.c reader.c writer.c \
-		analyze.c rtfread.c charsets.c \
-		substmap.c fileutil.c confutil.c \
-		numutils.c ole.c \
-		-I. -O3 -DHAVE_CONFIG_H \
-		-DCATDOC_VERSION=\"0.95\" \
-		-DCHARSETPATH=\"charsets\" \
-		-sEXPORTED_FUNCTIONS=_get_text,_get_author,_get_last_author,_get_version,_get_title,_get_subject,_get_keywords,_get_comments,_get_annotation_authors\
-		-sSTANDALONE_WASM -sWARN_ON_UNDEFINED_SYMBOLS=0 \
-		--no-entry -sFILESYSTEM=1 -sALLOW_MEMORY_GROWTH -sMAXIMUM_MEMORY=1GB
-
+	$(CC)  -o catdoc  $(OBJ) $(LDFLAGS)
 xls2csv: $(OBJXLS)
 	$(CC) -o xls2csv $(OBJXLS) -lm $(LDFLAGS)
 
